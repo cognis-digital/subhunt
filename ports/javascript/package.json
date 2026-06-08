@@ -1,0 +1,10 @@
+{
+  "name": "@cognis/subhunt",
+  "version": "0.2.0",
+  "description": "JavaScript port of subhunt (Cognis Neural Suite)",
+  "bin": {
+    "subhunt": "index.js"
+  },
+  "license": "LicenseRef-COCL-1.0",
+  "type": "module"
+}
