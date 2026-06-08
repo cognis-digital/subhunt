@@ -36,9 +36,11 @@ one clean subdomain set
 <a name="features"></a>
 ## Features
 
-- ✅ Todo
-- ✅ Fixme
-- ✅ Xxx
+- ✅ Normalize Host
+- ✅ Is Valid Hostname
+- ✅ In Scope
+- ✅ Parse Source
+- ✅ Aggregate
 - ✅ Runs on Linux/macOS/Windows · Docker · devcontainer
 - ✅ Ports in Python, JavaScript, Go, and Rust (`ports/`)
 
