@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: subhunt, labels: { app: subhunt } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: subhunt } }
+  template:
+    metadata: { labels: { app: subhunt } }
+    spec:
+      containers:
+        - name: subhunt
+          image: ghcr.io/cognis-digital/subhunt:latest
+          ports: [{ containerPort: 8000 }]
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: subhunt }
+spec:
+  selector: { app: subhunt }
+  ports: [{ port: 80, targetPort: 8000 }]
