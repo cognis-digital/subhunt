@@ -1,0 +1,6 @@
+www.example.com
+api.example.com
+https://api.example.com:8443/
+mail.example.com
+vpn.example.com
+blog.example.com

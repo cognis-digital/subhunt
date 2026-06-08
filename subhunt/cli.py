@@ -1,38 +1,88 @@
-"""SUBHUNT command-line interface."""
+"""Command-line interface for SUBHUNT."""
 from __future__ import annotations
-import argparse, sys
-from subhunt.core import scan, to_json, TOOL_NAME, TOOL_VERSION
+
+import argparse
+import json
+import sys
+
+from . import TOOL_NAME, TOOL_VERSION
+from .core import aggregate
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog=TOOL_NAME,
+        description=(
+            "Aggregate & dedupe subdomain enumeration output from multiple "
+            "sources into one clean set (defensive / authorized testing)."
+        ),
+    )
+    parser.add_argument(
+        "--version", action="version",
+        version=f"{TOOL_NAME} {TOOL_VERSION}",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    merge = sub.add_parser(
+        "merge",
+        help="Merge subdomain source files/dirs into one deduped set.",
+    )
+    merge.add_argument(
+        "sources", nargs="+",
+        help="Source files or directories (one host per line; "
+             "comments with '#'; first CSV/whitespace field is the host).",
+    )
+    merge.add_argument(
+        "-s", "--scope", default="",
+        help="Restrict to this registrable domain (e.g. example.com).",
+    )
+    merge.add_argument(
+        "-f", "--format", choices=("table", "json"), default="table",
+        help="Output format (default: table).",
+    )
+    return parser
+
+
+def _render_table(result) -> str:
+    lines = []
+    st = result.to_dict()["stats"]
+    lines.append(f"# SUBHUNT scope={result.scope or '*'}")
+    lines.append(
+        "# lines={total_lines} unique={unique} dup={duplicates} "
+        "invalid={invalid} oos={out_of_scope}".format(**st)
+    )
+    lines.append(f"# sources: {', '.join(result.source_files)}")
+    for s in result.subdomains:
+        srcs = ",".join(sorted(s.sources))
+        lines.append(f"{s.host}\t[{s.source_count}]\t{srcs}")
+    return "\n".join(lines)
+
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="subhunt", description="SUBHUNT — Cognis Neural Suite")
-    ap.add_argument("--version", action="version", version=f"{TOOL_NAME} {TOOL_VERSION}")
-    sub = ap.add_subparsers(dest="cmd")
-    s = sub.add_parser("scan", help="scan a file or directory")
-    s.add_argument("target")
-    s.add_argument("--format", choices=["table", "json"], default="table")
-    s.add_argument("--fail-on", choices=["critical", "high", "medium", "low"], default=None)
-    sub.add_parser("mcp", help="run as an MCP server")
-    args = ap.parse_args(argv)
+    parser = _build_parser()
+    args = parser.parse_args(argv)
 
-    if args.cmd == "mcp":
-        from subhunt.mcp_server import serve
-        return serve()
-    if args.cmd == "scan":
-        res = scan(args.target)
-        if args.format == "json":
-            print(to_json(res))
-        else:
-            if not res.findings:
-                print(f"[{TOOL_NAME}] no findings in {args.target}")
-            for f in res.findings:
-                print(f"  [{f.severity.upper():8}] {f.id}  {f.title}  ({f.where})")
-            print(f"\n{len(res.findings)} findings · risk score {res.score} · {res.elapsed_ms}ms")
-        order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
-        if args.fail_on and any(order.get(f.severity, 0) >= order[args.fail_on] for f in res.findings):
+    if args.command == "merge":
+        try:
+            result = aggregate(args.sources, scope=args.scope)
+        except (OSError, ValueError) as exc:
+            print(f"{TOOL_NAME}: error: {exc}", file=sys.stderr)
             return 2
-        return 0
-    ap.print_help()
-    return 0
 
-if __name__ == "__main__":
+        if args.format == "json":
+            print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        else:
+            print(_render_table(result))
+
+        # Non-zero exit when findings exist (so it composes in pipelines
+        # the same way grep/amass do), or when nothing usable was parsed.
+        if result.unique_count > 0:
+            return 1
+        return 0
+
+    parser.error("unknown command")
+    return 2  # pragma: no cover
+
+
+if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())

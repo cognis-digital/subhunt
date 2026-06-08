@@ -1,0 +1,8 @@
+WWW.Example.com.
+Mail.Example.COM
+portal.example.com
+shop.evil-corp.com
+not a host
+vpn.example.com
+203.0.113.10
+dev.example.com
