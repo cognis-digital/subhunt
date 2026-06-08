@@ -1,33 +1,11 @@
-"""SUBHUNT - aggregate & dedupe subdomain enumeration from multiple sources.
-
-Defensive / authorized-testing tool. It ingests subdomain lists produced by
-different enumeration tools (subfinder, amass, assetfinder, crt.sh dumps, etc.)
-and merges them into one clean, deduplicated, validated subdomain set.
-
-No network, no active probing, no attack capability -- pure offline
-aggregation, normalization and reporting.
-"""
-from .core import (
-    Subdomain,
-    AggregateResult,
-    normalize_host,
-    is_valid_hostname,
-    in_scope,
-    parse_source,
-    aggregate,
-)
-
-TOOL_NAME = "subhunt"
-TOOL_VERSION = "1.0.0"
-
-__all__ = [
-    "Subdomain",
-    "AggregateResult",
-    "normalize_host",
-    "is_valid_hostname",
-    "in_scope",
-    "parse_source",
-    "aggregate",
-    "TOOL_NAME",
-    "TOOL_VERSION",
-]
+"""subhunt — part of the Cognis Neural Suite."""
+try:  # re-export the tool's public API + identity from core
+    from subhunt.core import *  # noqa: F401,F403
+except Exception:  # pragma: no cover
+    pass
+try:
+    from subhunt.core import TOOL_NAME, TOOL_VERSION
+except Exception:  # pragma: no cover
+    TOOL_NAME = "subhunt"
+    TOOL_VERSION = "0.1.0"
+__version__ = TOOL_VERSION
