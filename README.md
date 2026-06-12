@@ -16,7 +16,7 @@
 </div>
 
 ```bash
-pip install cognis-subhunt
+pip install "git+https://github.com/cognis-digital/subhunt.git"
 subhunt scan .            # → prioritized findings in seconds
 ```
 
@@ -50,7 +50,7 @@ one clean subdomain set
 ## Quick start
 
 ```bash
-pip install cognis-subhunt
+pip install "git+https://github.com/cognis-digital/subhunt.git"
 subhunt --version
 subhunt scan .                       # scan current project
 subhunt scan . --format json         # machine-readable
