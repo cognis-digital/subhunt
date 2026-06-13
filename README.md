@@ -20,6 +20,29 @@ pip install cognis-subhunt
 subhunt scan .            # → prioritized findings in seconds
 ```
 
+## Usage — step by step
+
+1. **Install** the CLI (console script `subhunt`):
+   ```bash
+   pip install cognis-subhunt
+   ```
+2. **Merge enumeration output** — `merge` takes one or more source files/dirs (one host per line, `#` comments) and produces one deduped set:
+   ```bash
+   subhunt merge amass.txt subfinder.txt assetfinder.txt
+   ```
+3. **Scope and format** — restrict to a registrable domain and emit JSON:
+   ```bash
+   subhunt merge ./results/ --scope example.com --format json > subs.json
+   ```
+4. **Read the output** — each host lists its source count and which sources reported it; the JSON `stats` block reports `unique`, `duplicates`, `invalid`, and `out_of_scope`. Exit code is `1` when unique hosts were found, `0` when nothing usable parsed:
+   ```bash
+   subhunt merge *.txt --scope example.com --format json | jq '.stats'
+   ```
+5. **Automate in a recon pipeline** — feed the deduped set straight into the next tool:
+   ```bash
+   subhunt merge sources/*.txt --scope example.com | awk '{print $1}' | httpx
+   ```
+
 ## Contents
 
 - [Why subhunt?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
