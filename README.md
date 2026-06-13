@@ -20,6 +20,12 @@ pip install "git+https://github.com/cognis-digital/subhunt.git"
 subhunt scan .            # → prioritized findings in seconds
 ```
 
+<!-- cognis:layman:start -->
+## What is this?
+
+When you run multiple subdomain discovery tools (like subfinder, amass, or assetfinder) against a target, each one gives you a separate list of results with overlapping entries, typos, and out-of-scope junk. subhunt takes all those raw output files, merges them into one clean list, removes duplicates and invalid entries, and filters to only the subdomains that belong to your target domain. You get a single tidy result in table or JSON format, with a count of how many tools spotted each host, ready to pipe into the next step of a security assessment or automation workflow. It is built for security researchers, bug bounty hunters, and DevOps teams who run subdomain enumeration as part of recon or CI pipelines.
+<!-- cognis:layman:end -->
+
 ## Contents
 
 - [Why subhunt?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
@@ -47,6 +53,42 @@ one clean subdomain set
 <div align="right"><a href="#top">↑ back to top</a></div>
 
 <a name="quick-start"></a>
+<!-- cognis:install:start -->
+## Install
+
+`subhunt` is source-available (not published to PyPI) — every method below installs
+straight from GitHub. Pick whichever you prefer; the one-line scripts auto-detect
+the best tool available on your machine.
+
+**One-liner (Linux / macOS):**
+```sh
+curl -fsSL https://raw.githubusercontent.com/cognis-digital/subhunt/HEAD/install.sh | sh
+```
+
+**One-liner (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/cognis-digital/subhunt/HEAD/install.ps1 | iex
+```
+
+**Or install manually — any one of:**
+```sh
+pipx install "git+https://github.com/cognis-digital/subhunt.git"     # isolated (recommended)
+uv tool install "git+https://github.com/cognis-digital/subhunt.git"  # uv
+pip install "git+https://github.com/cognis-digital/subhunt.git"      # pip
+```
+
+**From source:**
+```sh
+git clone https://github.com/cognis-digital/subhunt.git
+cd subhunt && pip install .
+```
+
+Then run:
+```sh
+subhunt --help
+```
+<!-- cognis:install:end -->
+
 ## Quick start
 
 ```bash

@@ -34,6 +34,11 @@ class Subdomain:
         """Number of labels (e.g. a.b.example.com -> 4)."""
         return self.host.count(".") + 1
 
+    @property
+    def source_count(self) -> int:
+        """Number of distinct source files that reported this host."""
+        return len(self.sources)
+
     def to_dict(self) -> dict:
         return {
             "host": self.host,
