@@ -63,9 +63,16 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "merge":
+        # Validate that at least one source path was provided (argparse
+        # already enforces nargs="+", but defend against callers that
+        # bypass parse_args with an empty list).
+        if not args.sources:
+            print(f"{TOOL_NAME}: error: at least one source file or directory is required", file=sys.stderr)
+            return 2
+
         try:
             result = aggregate(args.sources, scope=args.scope)
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError, TypeError) as exc:
             print(f"{TOOL_NAME}: error: {exc}", file=sys.stderr)
             return 2
 

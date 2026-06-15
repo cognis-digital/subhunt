@@ -12,6 +12,7 @@ Real logic, standard library only. Responsibilities:
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 from dataclasses import dataclass, field
@@ -79,14 +80,26 @@ class AggregateResult:
         }
 
 
-def normalize_host(raw: str) -> str | None:
+def normalize_host(raw) -> str | None:
     """Normalize a raw token into a bare hostname, or None if not usable.
 
     Strips URL scheme, userinfo, path, query, port, wildcard prefixes,
     surrounding whitespace and trailing dots; lowercases; applies IDNA.
+    Accepts any input type; non-string inputs are coerced to str or rejected.
     """
     if raw is None:
         return None
+    # Accept only str-like; coerce bytes, reject anything else silently.
+    if isinstance(raw, bytes):
+        try:
+            raw = raw.decode("utf-8", errors="replace")
+        except Exception:
+            return None
+    elif not isinstance(raw, str):
+        try:
+            raw = str(raw)
+        except Exception:
+            return None
     h = raw.strip()
     if not h:
         return None
@@ -124,7 +137,7 @@ def is_valid_hostname(host: str) -> bool:
     Rejects empty, overlong (>253), single-label, and bare IPv4 addresses
     (we want names, not addresses).
     """
-    if not host or len(host) > 253:
+    if not host or not isinstance(host, str) or len(host) > 253:
         return False
     if "." not in host:
         return False
@@ -139,9 +152,13 @@ def is_valid_hostname(host: str) -> bool:
 
 def in_scope(host: str, scope: str) -> bool:
     """True if host equals scope or is a subdomain of scope."""
-    scope = scope.strip(".").lower()
+    if not scope or not isinstance(scope, str):
+        return True
+    scope = scope.strip().strip(".").lower()
     if not scope:
         return True
+    if not host or not isinstance(host, str):
+        return False
     return host == scope or host.endswith("." + scope)
 
 
@@ -151,7 +168,10 @@ def parse_source(text: str) -> list[str]:
     Supports: one-host-per-line, '#' comments, and lines where the host is
     the first comma- or whitespace-separated field (tool exports often append
     a source/IP column).
+    Returns an empty list for empty or non-string input.
     """
+    if not text or not isinstance(text, str):
+        return []
     tokens: list[str] = []
     for line in text.splitlines():
         line = line.strip()
@@ -164,19 +184,32 @@ def parse_source(text: str) -> list[str]:
 
 
 def _iter_source_files(paths: Iterable[str]) -> Iterable[tuple[str, str]]:
+    """Yield (filepath, text) for each readable file in paths.
+
+    Raises ValueError for paths that do not exist, so callers get a clear
+    message rather than a raw OSError traceback.
+    """
     for p in paths:
+        if not isinstance(p, str):
+            raise ValueError(f"path must be a string, got {type(p).__name__!r}")
         if os.path.isdir(p):
-            for name in sorted(os.listdir(p)):
+            entries = sorted(os.listdir(p))
+            for name in entries:
                 fp = os.path.join(p, name)
                 if os.path.isfile(fp):
                     yield fp, _read(fp)
-        else:
+        elif os.path.isfile(p):
             yield p, _read(p)
+        else:
+            raise ValueError(f"no such file or directory: {p!r}")
 
 
 def _read(path: str) -> str:
-    with open(path, "r", encoding="utf-8", errors="replace") as fh:
-        return fh.read()
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            return fh.read()
+    except OSError as exc:
+        raise OSError(f"cannot read {path!r}: {exc.strerror}") from exc
 
 
 def aggregate(paths: Iterable[str], scope: str = "") -> AggregateResult:
@@ -184,8 +217,14 @@ def aggregate(paths: Iterable[str], scope: str = "") -> AggregateResult:
 
     `paths` may be files or directories. `scope` (e.g. 'example.com') filters
     to that registrable domain; empty scope keeps everything valid.
+
+    Raises ValueError for missing/invalid paths.
+    Raises TypeError if paths is None.
     """
-    result = AggregateResult(scope=scope.strip(".").lower())
+    if paths is None:
+        raise TypeError("paths must be an iterable, got None")
+    scope_clean = scope.strip().strip(".").lower() if isinstance(scope, str) else ""
+    result = AggregateResult(scope=scope_clean)
     by_host: dict[str, Subdomain] = {}
 
     for path, text in _iter_source_files(paths):
@@ -197,7 +236,7 @@ def aggregate(paths: Iterable[str], scope: str = "") -> AggregateResult:
             if not host or not is_valid_hostname(host):
                 result.invalid += 1
                 continue
-            if scope and not in_scope(host, scope):
+            if scope_clean and not in_scope(host, scope_clean):
                 result.out_of_scope += 1
                 continue
             existing = by_host.get(host)
@@ -211,3 +250,21 @@ def aggregate(paths: Iterable[str], scope: str = "") -> AggregateResult:
         by_host.values(), key=lambda s: (s.depth, s.host)
     )
     return result
+
+
+def scan(target: str) -> AggregateResult:
+    """High-level alias: aggregate a single path (file or directory).
+
+    Provided for MCP server and other callers that prefer a simpler API.
+    Raises ValueError if target is missing or invalid.
+    """
+    if not target or not isinstance(target, str):
+        raise ValueError("target must be a non-empty string")
+    return aggregate([target])
+
+
+def to_json(result: AggregateResult) -> str:
+    """Serialize an AggregateResult to a JSON string."""
+    if not isinstance(result, AggregateResult):
+        raise TypeError(f"expected AggregateResult, got {type(result).__name__!r}")
+    return json.dumps(result.to_dict(), indent=2, sort_keys=True)
