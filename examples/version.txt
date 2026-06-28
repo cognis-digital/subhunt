@@ -1,0 +1,3 @@
+$ subhunt-emit --version
+
+subhunt 0.1.0

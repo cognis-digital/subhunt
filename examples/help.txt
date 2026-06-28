@@ -1,0 +1,14 @@
+$ subhunt-emit --help
+
+usage: subhunt [-h] [--version] {merge} ...
+
+Aggregate & dedupe subdomain enumeration output from multiple sources into one
+clean set (defensive / authorized testing).
+
+positional arguments:
+  {merge}
+    merge     Merge subdomain source files/dirs into one deduped set.
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit

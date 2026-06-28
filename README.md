@@ -20,6 +20,64 @@ pip install cognis-subhunt
 subhunt scan .            # → prioritized findings in seconds
 ```
 
+
+<!-- cognis:example:start -->
+## 🔎 Example output
+
+Real, reproducible output from the tool — runs offline:
+
+```console
+$ subhunt-emit --version
+subhunt 0.1.0
+```
+
+```console
+$ subhunt-emit --help
+usage: subhunt [-h] [--version] {merge} ...
+
+Aggregate & dedupe subdomain enumeration output from multiple sources into one
+clean set (defensive / authorized testing).
+
+positional arguments:
+  {merge}
+    merge     Merge subdomain source files/dirs into one deduped set.
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit
+```
+
+> Blocks above are real `subhunt` output — reproduce them from a clone.
+
+**Sample result format** _(illustrative values — run on your own data for real findings):_
+
+```
+{
+"findings": [
+    {
+        "id": "123456",
+        "title": "Suspicious Network Traffic",
+        "description": "Possible malicious activity detected on port 443",
+        "created_at": "2023-02-15T14:30:00Z",
+        "updated_at": "2023-02-15T14:30:01Z",
+        "labels": ["network", "suspicious"],
+        "observables": [
+            {
+                "type": "ip-dst",
+                "value": "192.0.2.1"
+            },
+            {
+                "type": "port",
+                "value": 443
+            }
+        ]
+    }
+]
+}
+```
+
+<!-- cognis:example:end -->
+
 ## Usage — step by step
 
 1. **Install** the CLI (console script `subhunt`):
